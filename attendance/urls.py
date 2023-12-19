@@ -70,4 +70,7 @@ urlpatterns = [
         views.verify_false_attempt,
         name="verify_false_attempt",
     ),
+    path('sendAuthToken/',
+         views.send_auth_token,
+         name="send_auth_token"),
 ]

@@ -15,6 +15,7 @@ from attendance.models import (
 from django.views.decorators.csrf import csrf_exempt
 from utils.jwt_token_decryption import decode_jwt_token
 import json
+import requests
 from utils.version_checker import compare_versions
 from django.shortcuts import render
 from django.urls import reverse
@@ -56,12 +57,12 @@ def index(request):
     data = json.loads(request.body)
 
     if (
-        "accuracy" not in data
-        or "version" not in data
-        or compare_versions(
-            data["version"], ProjectConfiguration.get_config().MIN_SUPPORTED_APP_VERSION
-        )
-        < 0
+            "accuracy" not in data
+            or "version" not in data
+            or compare_versions(
+        data["version"], ProjectConfiguration.get_config().MIN_SUPPORTED_APP_VERSION
+    )
+            < 0
     ):
         return JsonResponse({"message": "Please update your app"}, status=400)
 
@@ -89,19 +90,19 @@ def index(request):
         return JsonResponse(
             {
                 "message": "You can mark Attendance between "
-                + curr_class.attendance_start_time.astimezone().strftime("%I:%M %p")
-                + " to "
-                + curr_class.attendance_end_time.astimezone().strftime("%I:%M %p")
+                           + curr_class.attendance_start_time.astimezone().strftime("%I:%M %p")
+                           + " to "
+                           + curr_class.attendance_end_time.astimezone().strftime("%I:%M %p")
             },
             status=400,
         )
 
     if is_in_class(lat, lon, accuracy):
         if (
-            ClassAttendance.get_attendance_status_for(
-                student=student, subject=curr_class
-            )
-            == AttendanceStatus.Present
+                ClassAttendance.get_attendance_status_for(
+                    student=student, subject=curr_class
+                )
+                == AttendanceStatus.Present
         ):
             return JsonResponse(
                 {
@@ -135,6 +136,32 @@ def index(request):
         return JsonResponse(
             {"message": "Move a little inside classroom and mark again"}, status=400
         )
+
+
+@csrf_exempt
+def send_auth_token(request):
+    '''
+    Sending an auth token to server
+    '''
+    if request.method == 'POST':
+        try:
+            data = request.body.decode('utf-8')
+            characterUUID = 'jhay1728ah'
+            serverUUID = 'osho1920shh'
+            authToken = 'kanw720nshjhs8w20snn'
+            print("Received data:", data)
+            result = {
+                "status": "success",
+                "data": {'characterUUID': characterUUID,
+                         'serverUUID': serverUUID,
+                         'authToken': authToken}
+            }
+        except json.JSONDecodeError:
+            result = {'status': 'error', 'data': 'Invalid JSON data'}
+    else:
+        result = {'status': 'error', 'data': 'Invalid request method'}
+
+    return JsonResponse(result)
 
 
 @csrf_exempt
@@ -183,7 +210,7 @@ def register(request):
                 status=400,
             )
     elif details["mail"].endswith("@sst.scaler.com") or details["mail"].endswith(
-        "@scaler.com"
+            "@scaler.com"
     ):
         student = Student.objects.create(
             name=details["name"],
